@@ -15,22 +15,22 @@ def eye_blink(point,lm_face):
     center_top=(int(center_top_r[0]/2+center_top_l[0]/2),int(center_top_r[1]/2+center_top_l[1]/2))
     center_bottom=(int(center_bottom_r[0]/2+center_bottom_l[0]/2),int(center_bottom_r[1]/2+center_bottom_l[1]/2))
 
-    hor_line = cv2.line(frame, left_point, right_point, (0,0, 255), 2)
+    #hor_line = cv2.line(frame, left_point, right_point, (0,0, 255), 2)
         #ver_line1 = cv2.line(frame, center_top_r, center_bottom_l, (0, 0, 255), 2)
         #ver_line2 = cv2.line(frame, center_top_l, center_bottom_r, (0, 0, 255), 2)
-    ver_line = cv2.line(frame, center_top, center_bottom, (255, 0, 255), 2)
+    #ver_line = cv2.line(frame, center_top, center_bottom, (255, 0, 255), 2)
     hor_len=math.hypot((center_top[0]-center_bottom[0]),(center_top[1]-center_bottom[1]))
     ver_len=math.hypot((left_point[0]-right_point[0]),(left_point[1]-right_point[1]))
     ratio=ver_len/hor_len
     print("ti le= ",ratio)
     return ratio
 def gaze_ratio(point, lm_face):
-    left_eye=np.array([(landmarks.part(36).x,landmarks.part(36).y),
-                           (landmarks.part(37).x,landmarks.part(37).y),
-                           (landmarks.part(38).x,landmarks.part(38).y),
-                           (landmarks.part(39).x,landmarks.part(39).y),
-                           (landmarks.part(40).x,landmarks.part(40).y),
-                           (landmarks.part(41).x,landmarks.part(41).y)],np.int32)
+    left_eye=np.array([(lm_face.part(36).x,lm_face.part(36).y),
+                           (lm_face.part(37).x,lm_face.part(37).y),
+                           (lm_face.part(38).x,lm_face.part(38).y),
+                           (lm_face.part(39).x,lm_face.part(39).y),
+                           (lm_face.part(40).x,lm_face.part(40).y),
+                           (lm_face.part(41).x,lm_face.part(41).y)],np.int32)
     cao,rong,sau=frame.shape
     mask=np.zeros((cao,rong),np.uint8)
         
@@ -48,11 +48,26 @@ def gaze_ratio(point, lm_face):
          
         
     rt,thresh=cv2.threshold(gray_eye,70,255,cv2.THRESH_BINARY)
+    rong_mat_trai,dai_mat_trai=gray_eye.shape
+    nuatrai_mattrai=gray_eye[0:rong_mat_trai,0:int(dai_mat_trai/2)]
+    nuaphai_mattrai=gray_eye[0:rong_mat_trai,int(dai_mat_trai/2):dai_mat_trai]
+    nuatraitrang=cv2.countNonZero(nuatrai_mattrai)
+    nuaphaitrang=cv2.countNonZero(nuaphai_mattrai)
+   # print("nuatraitrang: ",nuatraitrang)
+    #print("nuaphaitrang: ",nuaphaitrang)
+    #cv2.imshow("nuatrai",nuatrai_mattrai)
+    #cv2.imshow("nuaphai",nuaphai_mattrai)
+    gaze_ratio = nuatraitrang/nuaphaitrang
+    #cv2.putText(frame, str(gaze_ratio), (70, 350), cv2.FONT_HERSHEY_COMPLEX, 2, (255, 0, 255), 3)
+    
+    
+    
     thresh=cv2.resize(thresh,None,fx=5,fy=5)
     cv2.imshow("eye",eye)
     cv2.imshow("thresh",thresh)
     cv2.imshow("left_eye",left_eye1)
-    cv2.polylines(frame,[left_eye],True,255,2)
+    #cv2.polylines(frame,[left_eye],True,255,2)
+    return gaze_ratio
 
 
     
@@ -77,30 +92,15 @@ while True:
             cv2.putText(frame, "Blinking", (50,150), fontface, fontscale, fontcolor) 
            
            # cv2.putText(frame,,(50,150),font,0.7,(0,255,0))
-        left_eye=np.array([(landmarks.part(36).x,landmarks.part(36).y),
-                           (landmarks.part(37).x,landmarks.part(37).y),
-                           (landmarks.part(38).x,landmarks.part(38).y),
-                           (landmarks.part(39).x,landmarks.part(39).y),
-                           (landmarks.part(40).x,landmarks.part(40).y),
-                           (landmarks.part(41).x,landmarks.part(41).y)],np.int32)
-        cao,rong,sau=frame.shape
-        mask=np.zeros((cao,rong),np.uint8)
+        gaze_ratio1=gaze_ratio(36,landmarks)/2+gaze_ratio(42,landmarks)/2
+        if gaze_ratio1 >=1.01:
+            cv2.putText(frame, "RIGHT", (50, 100), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
         
+        elif 0.95 <= gaze_ratio1 < 1.01:
+            cv2.putText(frame, "CENTER", (50, 100), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
+        else:
         
-        cv2.polylines(mask,[left_eye],True,255,2)
-        cv2.fillPoly(mask,[left_eye],255)
-        left_eye1=cv2.bitwise_and(gray,gray,mask=mask)
-        min_x=np.min(left_eye[:,0])
-        max_x=np.max(left_eye[:,0])
-        min_y=np.min(left_eye[:,1])
-        max_y=np.max(left_eye[:,1])       
-        
-        gray_eye=left_eye1[min_y : max_y,min_x:max_x]
-        eye=cv2.resize(gray_eye,None,fx=5,fy=5)
-         
-        
-        rt,thresh=cv2.threshold(gray_eye,70,255,cv2.THRESH_BINARY)
-        thresh=cv2.resize(thresh,None,fx=5,fy=5)
+            cv2.putText(frame, "LEFT", (50, 100), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
         
                     
 
